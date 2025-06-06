@@ -44,12 +44,15 @@ def compute_targets(order_row, plan_df, success_df):
 
     plan_df = assign_payments(plan_df, success_df)
 
-    cond1 = (plan_df['plan_payment_dt'] <= horizon1) & (
-        plan_df['payment_dt'].isna() | (plan_df['payment_dt'] > horizon1)
-    )
-    cond2 = (plan_df['plan_payment_dt'] <= horizon2) & (
-        plan_df['payment_dt'].isna() | (plan_df['payment_dt'] > horizon2)
-    )
+    # identify payments that should have been made by each horizon
+    cond1_date = plan_df['plan_payment_dt'] <= horizon1
+    cond2_date = plan_df['plan_payment_dt'] <= horizon2
+
+    unpaid_h1 = plan_df['payment_dt'].isna() | (plan_df['payment_dt'] > horizon1)
+    unpaid_h2 = plan_df['payment_dt'].isna() | (plan_df['payment_dt'] > horizon2)
+
+    cond1 = cond1_date & unpaid_h1
+    cond2 = cond2_date & unpaid_h2
     overdue_amount_1m = plan_df.loc[cond1, 'debt'].sum()
     overdue_amount_2m = plan_df.loc[cond2, 'debt'].sum()
 
